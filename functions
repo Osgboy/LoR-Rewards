@@ -1,0 +1,165 @@
+// Return a number with desired significant figures
+// e.g. =SIGFIG(123.56,2) returns 120
+function SIGFIG(num, significantFigures) {
+    return num.toPrecision(significantFigures) * 1;
+}
+
+// combines the distributions of 2 capsules into 1 dist
+function TWODIST(capA,capB) {
+  Logger.log(`capA: ${capA}`)
+  Logger.log(`capB: ${capB}`)
+  let pairDist = []; 
+  let sliceA = [];
+  let sliceB = [];
+  let tempSum = 0
+  for (let x=0; x < capA.length; x++) {
+    Logger.log(`x: ${x}`)
+    sliceA = capA.slice(0,x+1);
+    Logger.log(`sliceA: ${sliceA}`);
+    sliceB = capB.slice(0,(x+1)).reverse();
+    Logger.log(`sliceB: ${sliceB}`)
+    for (let y=0; y < sliceA.length; y++) {
+      tempSum += sliceA[y]*sliceB[y];
+      Logger.log(`tempSum: ${tempSum}`)
+    }
+    pairDist.push(tempSum)
+    tempSum = 0;
+    Logger.log(`pairDist: ${pairDist}`)
+  }
+  Logger.log(`TWODIST output: ${pairDist}`)
+  return pairDist;
+}
+
+// transpose dist first!
+// dist = array of distributions of each capsule
+// both = array of probabilities of each capsule pair
+function TWOCUMUL(dist, both) {
+  let cumul = [];
+  let extend = Array(dist[0].length-1).fill(0);
+  for (item=0; item < dist.length; item++) {
+    dist[item] = dist[item].concat(extend);
+  }    
+  Logger.log(dist);
+  for (let a = 0; a < dist[0].length; a++) {
+    cumul.push(0);
+  }
+  Logger.log(cumul);
+  let mult = 1;
+  for (let i = 0; i < both.length; i++) { //row
+    for (let j=i; j < both.length; j++) { //column
+      Logger.log(`i is ${i}, j is ${j}`)
+      mult = both[j][i]; //multiplier
+      if (! j==i) {
+        mult *= 2;
+      }
+      let bidist = TWODIST(dist[i],dist[j]);
+      for (let k = 0; k < dist[0].length; k++) {
+        cumul[k] += mult*bidist[k];
+      }
+    }
+  }
+  Logger.log(`TWOCUMUL output: ${cumul}`)
+  Logger.log(Array.isArray(cumul))
+  return cumul;
+}
+
+//combines the distributions of 3 capsules into 1 dist
+function THREEDIST(capC,capD,capE) {
+    let distTD = [];
+    for (let x=0; x <= (capC.length-1)*3; x++) {
+        distTD.push(0);
+    }
+    for (let tdi=0; tdi < capC.length; tdi++) {
+        for (let tdj=0; tdj < capD.length; tdj++) {
+            for (let tdk=0; tdk < capE.length; tdk++) {
+              Logger.log("threedistout")
+              Logger.log(capC[tdi]*capD[tdj]*capE[tdk])
+                distTD[tdi+tdj+tdk] += capC[tdi]*capD[tdj]*capE[tdk];
+            }
+        }
+    }
+    return distTD;
+}
+
+function THREECUMUL(dist, base) {
+  let cumul = [];
+  let extend = Array(2*(dist[0].length-1)).fill(0);
+  let tri = CUBE(base);
+  Logger.log(`tri: ${tri}`)
+  //Logger.log(`dist: ${dist}`)
+  Logger.log(dist)
+  for (let item=0; item < dist.length; item++) {
+    dist[item] = dist[item].concat(extend);
+  }
+   for (let zed = 0; zed < dist[0].length; zed++) {
+    cumul.push(0);
+  }
+  Logger.log(cumul);
+  let mult = 1;
+  for (let i = 0; i < tri.length; i++) {
+    for (let j = 0; j < tri.length; j++) {
+      for (let k = 0; k < tri.length; k++) {
+        mult = tri[i][j][k];
+        Logger.log(`i: ${i}, j:${j} , k: ${k}`)
+        Logger.log(`mult: ${mult}`)
+        for (let m = 0; m < dist[0].length; m++) {
+          /*Logger.log(dist[i].slice(0,m+1))
+          Logger.log(dist[j].slice(0,m+1))
+          Logger.log(dist[k].slice(0,m+1))*/
+          cumul[k] += mult*THREEDIST(dist[i].slice(0,m+1),dist[j].slice(0,m+1),dist[k].slice(0,m+1));
+          Logger.log(cumul)
+        }
+      }
+    }
+  }
+}
+
+//calculates the probabilites of each combination of 3 capsules
+//todo: optimize to calculate for each unique combination instead of every permutation
+//todo: generalize to n dimensions of capsule combinations
+//https://stackoverflow.com/questions/12588618/javascript-n-dimensional-array-creation
+//todo: how do i choose names for my variables? D:
+function CUBE(distc) {
+  Logger.log(`distc ${distc}`)
+  let cube = []
+  for (let x=0; x < distc.length; x++) {
+    cube.push([]);
+    for (let y=0; y < distc.length; y++) {
+      cube[x].push([]);
+      for (let z=0; z < distc.length; z++) {
+        cube[x][y].push(distc[x]*distc[y]*distc[z]);
+      }
+    }
+  }
+  return cube;
+}
+
+function EXPECVAL(num,prob) {
+    let sum = 0;
+    for (let i=0; i < num.length; i++) {
+        sum += num[i]*prob[i];
+    }
+    return sum;
+}
+
+function asdf() {
+  x=1;
+  let y=2;
+  var z=3;
+}
+
+const dista = [[7,1,0.75,0.5,0.5,0.25],
+               [7,1,0.75,0.5,0.5,0.25],
+               [7,1,0.75,0.5,0.5,0.25],
+               [7,1,0.75,0.5,0.5,0.25]];
+const botha = [[72.25,	4.25,	7.65,	0.85],
+               [4.25,	0.25,	0.45,	0.05],
+               [7.65,	0.45,	0.81,	0.85],
+               [0.85,	0.05,	0.09,	0.01]];
+
+//TWOCUMUL(dista,botha);
+//Logger.log(CUBE([.7225,	0.0425,	.0765,	.0085,]))
+//asdf()
+//Logger.log(`x: ${x}`)
+//Logger.log(`y: ${y}`)
+//Logger.log(`z: ${z}`)
